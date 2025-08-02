@@ -179,3 +179,22 @@ class DexBot():
 
     def token_getter(self, message):
         pass
+
+def get_tokens(blockchain="Solana", max_token=60):
+    """
+    Scrape new Solana pairs via WebSocket and return a Python list of dicts.
+    """
+    # 1) Build your WS URL (you can also parameterize this if you like)
+    url = f"wss://io.dexscreener.com/dex/screener/v1/stream/trending?chainIds=%5B%22{blockchain.lower()}%22%5D"
+    # 2) Instantiate the bot (no need for TELEGRAM in the actor)
+    bot = DexBot(
+        api_key=os.getenv("TG_API_KEY", ""),  # won't be used in the actor
+        url=url,
+        channel_id="",                       # unused
+        max_token=max_token
+    )
+    # 3) Scrape & format
+    json_str = bot.format_token_data()
+    data = json.loads(json_str)["data"]
+    # 4) Return up to max_token entries as a list of dicts
+    return data[:max_token]
