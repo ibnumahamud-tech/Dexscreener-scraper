@@ -1,16 +1,18 @@
 FROM python:3.9-slim
 
-# 1) Set working dir
+# Install build tools so misaka’s C extension can compile
+RUN apt-get update \
+ && apt-get install -y gcc libffi-dev python3-dev \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /usr/src/app
 
-# 2) Copy the root requirements.txt (not under api/)
+# Copy and install Python deps
 COPY requirements.txt ./
-
-# 3) Install deps
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4) Copy all of the api/ folder into the container
+# Copy your scraper code
 COPY api/ ./
 
-# 5) Launch your Flask app directly (assuming you renamed app.py → main.py)
+# Run your app
 CMD ["python", "main.py"]
