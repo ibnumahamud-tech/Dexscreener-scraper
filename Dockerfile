@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ ./
 
 # Run your app
-CMD ["python", "main.py"]
+CMD ["python", "app.py"]
