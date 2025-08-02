@@ -5,7 +5,7 @@ from apify_client import ApifyClient
 
 def main():
     # 1) Scrape the data
-    items = fetch_tokens(blockchain="Solana")  # or pass args from INPUT_SCHEMA
+    items = get_tokens(blockchain="Solana")  # or pass args from INPUT_SCHEMA
     
     # 2) Push into the default Apify dataset
     client = ApifyClient(os.getenv("APIFY_TOKEN"))
