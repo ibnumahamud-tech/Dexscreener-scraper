@@ -1,6 +1,6 @@
 import os
 import json
-from dex import get_tokens  # assume dex.py exposes a get_tokens() function
+from api.dex import get_tokens  # assume dex.py exposes a get_tokens() function
 from apify_client import ApifyClient
 
 def main():
