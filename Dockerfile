@@ -7,12 +7,12 @@ RUN apt-get update \
 
 WORKDIR /usr/src/app
 
-# Copy and install Python deps
+# Copy your requirements and install
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your scraper code
-COPY api/ ./
+# Copy the api folder INTO a subdirectory named api
+COPY api ./api
 
-# Run your app
-CMD ["python", "main.py"]
+# Run the actual scraper sitting at api/main.py
+CMD ["python", "api/main.py"]
