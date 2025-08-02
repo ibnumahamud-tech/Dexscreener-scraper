@@ -17,193 +17,127 @@ nest_asyncio.apply()
 Api = "TG bot API here"
 ID = "Channel ID"
 
-class DexBot():
+class DexBot:
     def __init__(self, api_key, url, channel_id=ID, max_token=10):
         self.api_key = api_key
         self.channel_id = channel_id
         self.max_token = max_token
         self.url = url
-        
 
     def generate_sec_websocket_key(self):
         random_bytes = os.urandom(16)
-        key = base64.b64encode(random_bytes).decode('utf-8')
+        key = base64.b64encode(random_bytes).decode("utf-8")
         return key
 
     def get_headers(self):
-        headers = {
+        return {
             "Host": "io.dexscreener.com",
             "Connection": "Upgrade",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "User-Agent": "...",
             "Upgrade": "websocket",
             "Origin": "https://dexscreener.com",
-            'Sec-WebSocket-Version': '13',
+            "Sec-WebSocket-Version": "13",
             "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Sec-WebSocket-Key": self.generate_sec_websocket_key()
+            "Sec-WebSocket-Key": self.generate_sec_websocket_key(),
         }
-        return headers
 
     def format_token_data(self):
-
-        """
-        Fetch information about specific tokens from the Dexscreener API.
-
-        Args:
-            token_addresses (list): List of token addresses.
-
-        Returns:
-            dict: A dictionary containing data for each token address or an error message.
-        """
-
         token_addresses = self.start()
-
         base_url = "https://api.dexscreener.com/latest/dex/tokens/"
         results = {}
-
         for address in token_addresses:
             try:
-                # Make an API call for each token address
-                response = requests.get(f"{base_url}{address}")
-                if response.status_code == 200:
-                    data = response.json()
-                    # Store the relevant data for the token address
-                    pairs = data.get('pairs', [])  # 'pairs' contains token market data
-                    
-                    if pairs and len(pairs) > 0:
-                        results[address] = pairs[0]  # Store first pair's data
-                    else:
-                        results[address] = {"pairAddress": address,
-                                            "Error": "No data Retrieved"}
+                resp = requests.get(f"{base_url}{address}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    pairs = data.get("pairs", [])
+                    results[address] = pairs[0] if pairs else {
+                        "pairAddress": address,
+                        "Error": "No data Retrieved"
+                    }
                 else:
-                    # Handle HTTP errors
-                    results[address] = f"Error: Status code {response.status_code}"
-            except requests.RequestException as e:
-                # Handle request exceptions
-                results[address] = f"Error making request: {str(e)}"
-
-        # Extracting values as a list
-        results = list(results.values())
-        # Output the result as JSON
-
-        return json.dumps({"data": results}, indent=2)
-      
+                    results[address] = f"Error: Status code {resp.status_code}"
+            except Exception as e:
+                results[address] = f"Error making request: {e}"
+        return json.dumps({"data": list(results.values())}, indent=2)
 
     async def connect(self):
         headers = self.get_headers()
         try:
             session = AsyncSession(headers=headers)
             ws = await session.ws_connect(self.url)
-            print(self.url)
-
-            # Loop to keep receiving data until the connection is closed
             while True:
-                try:
-                    # Receive data from WebSocket
-                    data = await ws.recv()
-
-                    if data:
-                        response = data[0]  # Assuming the first element contains the desired message
-                        # Process and return the data or handle it as needed
-                        #print(response)  # You can replace this with your desired processing logic
-                        if "pairs" in str(response):
-                          return response
-
-                    else:
-                        # If no data is received, break out of the loop
-                        print("No data received.")
-                        break
-
-                except Exception as e:
-                    print(f"Error receiving message: {str(e)}")
-                    break
-
-            # Closing the WebSocket and session after the loop ends
+                data = await ws.recv()
+                if data and "pairs" in str(data[0]):
+                    return data[0]
             await ws.close()
             await session.close()
-
         except Exception as e:
-            print(f"Connection error: {str(e)}")
-            return f"Connection error: {str(e)}"
-
+            return f"Connection error: {e}"
 
     def tg_send(self, message):
         try:
-            self.bot.send_message(self.channel_id, message, parse_mode='MarkdownV2', disable_web_page_preview=True)
+            self.bot.send_message(
+                self.channel_id,
+                message,
+                parse_mode="MarkdownV2",
+                disable_web_page_preview=True,
+            )
         except Exception as e:
             print(f"Telegram sending error: {e}")
 
-        def start(self):
-            loop = asyncio.new_event_loop()
-            # … other lines …
-            
-            mes = loop.run_until_complete(self.connect())
-            loop.close()
-    
-            # Decode the message, replacing non-printable characters with spaces
-            if isinstance(mes, (bytes, bytearray)):
-                decoded_text = ''.join(chr(b) if 32 <= b <= 126 else ' ' for b in mes)
-            elif isinstance(mes, str):
-                decoded_text = mes
-            else:
-                decoded_text = str(mes)
+    def start(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        # Split the string by whitespace into words and filter out short words
-        words = [word for word in decoded_text.split() if len(word) >= 55]
-        # …
+        mes = loop.run_until_complete(self.connect())
+        loop.close()
 
-        # Filter out special characters from words
-        filtered_words = [re.sub(r'["*<$@(),.].*', '', word) for word in words]
+        # Decode safely
+        if isinstance(mes, (bytes, bytearray)):
+            decoded_text = "".join(
+                chr(b) if 32 <= b <= 126 else " " for b in mes
+            )
+        elif isinstance(mes, str):
+            decoded_text = mes
+        else:
+            decoded_text = str(mes)
 
-        # Extract data from words
-        extracted_data = []
-        for token in filtered_words:
+        words = [w for w in decoded_text.split() if len(w) >= 55]
+        filtered = [re.sub(r'["*<$@(),.].*', "", w) for w in words]
+
+        extracted = []
+        for token in filtered:
             try:
-                # Check if token contains an ETH address
                 if "0x" in token:
-                    token = re.findall(r'(0x[0-9a-fA-F]+)', token)[-1]
-                    print(token)
-                # Check if token contains 'pump' keyword
+                    token = re.findall(r"(0x[0-9a-fA-F]+)", token)[-1]
                 elif "pump" in token:
-                    token = re.findall(r".{0,40}pump", token)[0]
-                    # Remove leading 'V' if present
-                    if token.startswith("V"):
-                        token = token[1:]
-
-
-                # Otherwise extract the last 44 characters
+                    token = re.findall(r".{0,40}pump", token)[0].lstrip("V")
                 else:
                     token = token[-44:]
+                extracted.append(token)
+            except Exception:
+                pass
 
-            
-                extracted_data.append(token)
-            except Exception as e:
-                print(f"There is an error in the token list: {e}")
-
-        
-
-        return extracted_data[:60]
-
+        return extracted[: self.max_token]
 
     def token_getter(self, message):
         pass
 
+
 def get_tokens(blockchain="Solana", max_token=60):
-    """
-    Scrape new Solana pairs via WebSocket and return a Python list of dicts.
-    """
-    # 1) Build your WS URL (you can also parameterize this if you like)
     url = f"wss://io.dexscreener.com/dex/screener/v1/stream/trending?chainIds=%5B%22{blockchain.lower()}%22%5D"
-    # 2) Instantiate the bot (no need for TELEGRAM in the actor)
-    bot = DexBot(
-        api_key=os.getenv("TG_API_KEY", ""),  # won't be used in the actor
-        url=url,
-        channel_id="",                       # unused
-        max_token=max_token
+    bot = DexBot(api_key="", url=url, channel_id="", max_token=max_token)
+    json_str = bot.format_token_data()
+    data = json.loads(json_str)["data"]
+    return data[:max_token]
+
     )
     # 3) Scrape & format
     json_str = bot.format_token_data()
     data = json.loads(json_str)["data"]
     # 4) Return up to max_token entries as a list of dicts
     return data[:max_token]
+
 
 
