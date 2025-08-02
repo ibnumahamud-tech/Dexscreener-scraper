@@ -139,8 +139,13 @@ class DexBot():
         loop.close()
 
         # Decode the message, replacing non-printable characters with spaces
-        decoded_text = ''.join(chr(b) if 32 <= b <= 126 else ' ' for b in mes)
-
+         if isinstance(mes, (bytes, bytearray)):
+            decoded_text = ''.join(chr(b) if 32 <= b <= 126 else ' ' for b in mes)
+        elif isinstance(mes, str):
+            decoded_text = mes
+        else:
+            decoded_text = str(mes)
+            
         # Split the string by whitespace into words and filter out short words
         words = [word for word in decoded_text.split() if len(word) >= 55]
 
@@ -198,3 +203,4 @@ def get_tokens(blockchain="Solana", max_token=60):
     data = json.loads(json_str)["data"]
     # 4) Return up to max_token entries as a list of dicts
     return data[:max_token]
+
