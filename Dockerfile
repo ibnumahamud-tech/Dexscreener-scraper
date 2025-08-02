@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api ./api
 
 # Run the actual scraper sitting at api/main.py
-CMD ["python", "api/main.py"]
+CMD ["python", "-m", "api.main"]
