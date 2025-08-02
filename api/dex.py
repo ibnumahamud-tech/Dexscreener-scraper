@@ -132,12 +132,12 @@ def get_tokens(blockchain="Solana", max_token=60):
     data = json.loads(json_str)["data"]
     return data[:max_token]
 
-    )
     # 3) Scrape & format
     json_str = bot.format_token_data()
     data = json.loads(json_str)["data"]
     # 4) Return up to max_token entries as a list of dicts
     return data[:max_token]
+
 
 
 
