@@ -8,3 +8,4 @@ websockets
 Flask-Misaka
 curl-cffi
 nest-asyncio
+apify-client>=1.0.0
