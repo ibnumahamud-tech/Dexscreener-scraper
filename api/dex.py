@@ -132,22 +132,24 @@ class DexBot():
         except Exception as e:
             print(f"Telegram sending error: {e}")
 
-    def start(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        mes = loop.run_until_complete(self.connect())
-        loop.close()
-
-        # Decode the message, replacing non-printable characters with spaces
-         if isinstance(mes, (bytes, bytearray)):
-            decoded_text = ''.join(chr(b) if 32 <= b <= 126 else ' ' for b in mes)
-        elif isinstance(mes, str):
-            decoded_text = mes
-        else:
-            decoded_text = str(mes)
+        def start(self):
+            loop = asyncio.new_event_loop()
+            # … other lines …
             
+            mes = loop.run_until_complete(self.connect())
+            loop.close()
+    
+            # Decode the message, replacing non-printable characters with spaces
+            if isinstance(mes, (bytes, bytearray)):
+                decoded_text = ''.join(chr(b) if 32 <= b <= 126 else ' ' for b in mes)
+            elif isinstance(mes, str):
+                decoded_text = mes
+            else:
+                decoded_text = str(mes)
+
         # Split the string by whitespace into words and filter out short words
         words = [word for word in decoded_text.split() if len(word) >= 55]
+        # …
 
         # Filter out special characters from words
         filtered_words = [re.sub(r'["*<$@(),.].*', '', word) for word in words]
@@ -203,4 +205,5 @@ def get_tokens(blockchain="Solana", max_token=60):
     data = json.loads(json_str)["data"]
     # 4) Return up to max_token entries as a list of dicts
     return data[:max_token]
+
 
